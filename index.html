@@ -1,6 +1,12 @@
 <!DOCTYPE>
 <html>
-    <canvas id="hackCanvas" width="400" height="400" style="border: 4px solid;"></canvas>
+    <head>
+        <style type="text/css" media="screen">
+            canvas, img { display:block; margin: auto; border:2px solid black; }
+            canvas { background:url(green.jpg) }
+        </style>
+    </head>
+    <canvas id="hackCanvas" width="400" height="400" style="border: 2px solid;"></canvas>
     <script src="bower_components/jquery/dist/jquery.js"></script>
 
     <script>
@@ -17,26 +23,41 @@
             });
             
             var head = tail[tail.length - 1];
-            var move = function(){
-                switch(direction){
-                    case "up":
-                        var new_head = new Pixel(head.x, head.y - 1, 10, ctx);
-                        break;
-                    case "down":
-                        var new_head = new Pixel(head.x, head.y + 1, 10, ctx);
-                        break;
-                    case "left":
-                        var new_head = new Pixel(head.x - 1, head.y, 10, ctx);
-                        break;
-                    case "right":
-                        var new_head = new Pixel(head.x + 1, head.y, 10, ctx);
-                        break;
-                    default:
-                        var new_head = new Pixel(head.x + 1, head.y, 10, ctx);
+
+            var isOnFood = function(food){
+                if(food.getApple().x === head.x && food.getApple().y === head.y){
+                    return true;
                 }
-                tail.push(new_head);
-                tail.shift();
-                head = new_head;
+                else{
+                    return false;
+                }
+            };
+
+            var move = function(){
+                    switch(direction){
+                        case "up":
+                            var new_head = new Pixel(head.x, head.y - 1, 10, ctx);
+                            break;
+                        case "down":
+                            var new_head = new Pixel(head.x, head.y + 1, 10, ctx);
+                            break;
+                        case "left":
+                            var new_head = new Pixel(head.x - 1, head.y, 10, ctx);
+                            break;
+                        case "right":
+                            var new_head = new Pixel(head.x + 1, head.y, 10, ctx);
+                            break;
+                        default:
+                            var new_head = new Pixel(head.x + 1, head.y, 10, ctx);
+                    }
+                    tail.push(new_head);
+                    if(isOnFood(food) == false){
+                        tail.shift();
+                    }
+                    else{
+                        food.generate_food();
+                    }
+                    head = new_head;
             };
             var print = function(){
                 tail.forEach(function(pixel){
@@ -56,21 +77,57 @@
                 return head;
             };
 
-            var check_borders= function(){
-                if(snake.get_head().x <= 0 || snake.get_head().y <= 0 || snake.get_head().x >= canvasWidth / 10 || snake.get_head().y >= canvasHeight / 10){
+            var kill_snake = function(){
+                clearInterval(clearint)
+            }
+
+            var check_borders = function(){
+                if(head.x < 0 || head.y < 0 || head.x > Math.floor(canvasWidth / 10 - 1) || head.y > Math.floor(canvasHeight / 10 - 1)){
+                    console.log("asdasdasdasds");
+                    alert("Snake is dead! Restart -> F5");
+                    kill_snake();
                 }
             };
-
-
             return {
                 print: print,
                 move: move,
                 setDirection: setDirection,
                 get_head: get_head,
                 check_borders: check_borders,
+                isOnFood: isOnFood,
             }
         }(ctx));
         
+        var food = (function(ctx){
+            var x = 20;
+            var y = 20;
+            var apple = new Pixel(x, y, 10, ctx);
+
+            var getApple = function(){
+                return apple;
+            }
+            var getX = function(){
+                return x;
+            };
+            var getY = function(){
+                return y;
+            }
+            var generate_food = function(){
+                x = Math.floor((Math.random() * canvasWidth / 10) + 1);
+                y = Math.floor((Math.random() * canvasHeight / 10) + 1);
+                apple = new Pixel(x, y, 10, ctx);
+            };
+
+            var print = function(){
+                apple.print();
+            };
+            return {
+                generate_food: generate_food,
+                getApple: getApple,
+                print: print,
+            }
+        }(ctx));
+
         initKeyController(function(direction){
             snake.setDirection(direction);
         })
@@ -85,11 +142,12 @@
                 cb(keyCodeToDirectionTable[e.which]);
             })
         }
-        setInterval(function(){
+        var clearint = setInterval(function(){
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
             snake.print();
-            snake.move();
             snake.check_borders();
+            snake.move();
+            food.print();
         }, 100)
 
         function Pixel(x, y, size, ctx){
@@ -103,7 +161,5 @@
                 this.ctx.fillRect(this.x * this.size, this.y * this.size, this.size, this.size);
             }
         }
-
-
     </script>
 </html>
