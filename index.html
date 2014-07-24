@@ -4,22 +4,66 @@
         <style type="text/css" media="screen">
             canvas, img { display:block; margin: auto; border:2px solid black; }
             canvas { background:url(green.jpg) }
+            .center{
+                margin-right: 50%;
+            }
+
         </style>
+        <link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" media="screen">
     </head>
-    <canvas id="hackCanvas" width="400" height="400" style="border: 2px solid;"></canvas>
+    <div>
+        <canvas id="hackCanvas" width="800" height="400" style="border: 2px solid;"></canvas>
+        <div class="panel panel-success center">
+            <div class="panel-heading">Change the snake</div>
+          <div class="panel-body">
+            <form>
+                Points: <span id="points">0</span><br>
+                Game speed (1, 10, step:1): <span id="range">1</span>
+                <br>
+                <br>
+                <input type="range" name="range" value="1" min="1" max="10" step="1" onchange="showValue(this.value)" list="volsettings">
+                <datalist id="volsettings">
+                    <option>0</option>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                    <option>9</option>
+                    <option>10</option>
+                </datalist>
+                <br>
+                Change the color of the snake: <input type="color" name="favcolor"><br>
+                <input type="checkbox" name="pause" value="p">P for Pause<br>
+                <input type="checkbox" name="reverse" value="r">R for Reverse<br>
+                <br>
+                <button>Top Chart</button>
+            </form>
+          </div>
+        </div>
+    </div>
     <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <img src="Apple.png" id="lamp" style="display:none;" width="32" height="32">
 
     <script>
+        function showValue(newValue){
+            document.getElementById("range").innerHTML=newValue;
+        }
         var canvas = document.getElementById("hackCanvas");
         var ctx = canvas.getContext("2d");
         var canvasWidth = $("#hackCanvas").width();
         var canvasHeight = $("#hackCanvas").height();
+        var img = document.getElementById("lamp");
 
         var snake = (function(ctx){
             var tail = [];
             var direction = "right";
             [1, 2, 3].forEach(function(i){
-                tail.push(new Pixel(i, 1, 10, ctx))
+                tail.push(new Pixel(i, 1, 20, ctx))
             });
             
             var head = tail[tail.length - 1];
@@ -36,19 +80,19 @@
             var move = function(){
                     switch(direction){
                         case "up":
-                            var new_head = new Pixel(head.x, head.y - 1, 10, ctx);
+                            var new_head = new Pixel(head.x, head.y - 1, 20, ctx);
                             break;
                         case "down":
-                            var new_head = new Pixel(head.x, head.y + 1, 10, ctx);
+                            var new_head = new Pixel(head.x, head.y + 1, 20, ctx);
                             break;
                         case "left":
-                            var new_head = new Pixel(head.x - 1, head.y, 10, ctx);
+                            var new_head = new Pixel(head.x - 1, head.y, 20, ctx);
                             break;
                         case "right":
-                            var new_head = new Pixel(head.x + 1, head.y, 10, ctx);
+                            var new_head = new Pixel(head.x + 1, head.y, 20, ctx);
                             break;
                         default:
-                            var new_head = new Pixel(head.x + 1, head.y, 10, ctx);
+                            var new_head = new Pixel(head.x + 1, head.y, 20, ctx);
                     }
                     tail.push(new_head);
                     if(isOnFood(food) == false){
@@ -82,9 +126,8 @@
             }
 
             var check_borders = function(){
-                if(head.x < 0 || head.y < 0 || head.x > Math.floor(canvasWidth / 10 - 1) || head.y > Math.floor(canvasHeight / 10 - 1)){
-                    console.log("asdasdasdasds");
-                    alert("Snake is dead! Restart -> F5");
+                if(head.x < 0 || head.y < 0 || head.x > Math.floor(canvasWidth / 20 - 1) || head.y > Math.floor(canvasHeight / 20 - 1)){
+                    //alert("Snake is dead! Restart -> F5");
                     kill_snake();
                 }
             };
@@ -99,9 +142,9 @@
         }(ctx));
         
         var food = (function(ctx){
-            var x = 20;
-            var y = 20;
-            var apple = new Pixel(x, y, 10, ctx);
+            var x = 10;
+            var y = 10;
+            var apple = new Pixel(x, y, 20, ctx, img);
 
             var getApple = function(){
                 return apple;
@@ -113,18 +156,19 @@
                 return y;
             }
             var generate_food = function(){
-                x = Math.floor((Math.random() * canvasWidth / 10) + 1);
-                y = Math.floor((Math.random() * canvasHeight / 10) + 1);
-                apple = new Pixel(x, y, 10, ctx);
+                x = Math.floor((Math.random() * canvasWidth / 20));
+                y = Math.floor((Math.random() * canvasHeight / 20));
+                apple = new Pixel(x, y, 20, ctx, img);
             };
 
-            var print = function(){
-                apple.print();
+            var print_food = function(){
+                apple.print_food();
             };
             return {
                 generate_food: generate_food,
                 getApple: getApple,
                 print: print,
+                print_food: print_food,
             }
         }(ctx));
 
@@ -147,10 +191,10 @@
             snake.print();
             snake.check_borders();
             snake.move();
-            food.print();
+            food.print_food();
         }, 100)
 
-        function Pixel(x, y, size, ctx){
+        function Pixel(x, y, size, ctx, img){
             this.x = x;
             this.y = y;
             this.ctx = ctx;
@@ -159,6 +203,9 @@
             this.print = function(){
                 this.ctx.fillStyle = "red";
                 this.ctx.fillRect(this.x * this.size, this.y * this.size, this.size, this.size);
+            }
+            this.print_food = function(){
+                this.ctx.drawImage(img, this.x * this.size, this.y * this.size, this.size, this.size);
             }
         }
     </script>
